@@ -52,7 +52,7 @@ class ArticleController extends Controller
         $article->title = $request->input('title');
         $article->content = $request->input('content');
         $article['user_id'] = auth()->id();
-       $article->save();
+        $article->save();
         return redirect(route('article.index'));
     }
 
