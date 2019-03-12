@@ -3,15 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Article;
+use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
 
 class ArticleController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('auth')->except(["index", "show"]);
+    }
+
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
+
+
     public function index()
     {
         $articles = Article::all();
@@ -34,7 +43,7 @@ class ArticleController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -42,18 +51,15 @@ class ArticleController extends Controller
         $article = new Article;
         $article->title = $request->input('title');
         $article->content = $request->input('content');
-        /**
-         *
-         * associer ici le User
-         *
-         */
-        $article->save();
+        $article['user_id'] = auth()->id();
+       $article->save();
+        return redirect(route('article.index'));
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Article  $article
+     * @param  \App\Article $article
      * @return \Illuminate\Http\Response
      */
     public function show(Article $article)
@@ -66,21 +72,28 @@ class ArticleController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Article  $article
+     * @param  \App\Article $article
      * @return \Illuminate\Http\Response
      */
     public function edit(Article $article)
     {
-        return view('article.edit', [
-            'article' => $article
-        ]);
+        if (\Gate::allows('article', $article)){
+            return view('article.edit', [
+                'article' => $article
+            ]);
+        }
+
+        elseif(\Gate::denies('article', $article)){
+           return redirect (route('article.index'));
+        }
+                                                        //abort_if(! auth()->user()->owns($article), 403);   //   seul l'ustilisateur en question peut modifier
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Article  $article
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\Article $article
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Article $article)
@@ -95,7 +108,7 @@ class ArticleController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Article  $article
+     * @param  \App\Article $article
      * @return \Illuminate\Http\Response
      */
     public function destroy(Article $article)
